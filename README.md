@@ -4,7 +4,9 @@ Arduino_RGB_Temperature_Board
 7-Segment board with to rows for temperature (inside/outside) and RGB-LEDs showing the temperature in color
 
 
-== Serial Input ==
+Serial Input
+--
+
   1:12,5\n
 
 and 
