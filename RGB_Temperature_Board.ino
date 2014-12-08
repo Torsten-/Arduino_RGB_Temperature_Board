@@ -36,13 +36,14 @@ byte pins_rgb2[] = {9,11,10};
 #define SERIAL_BAUD 9600 // Baud-Rate of serial port
 
 // Timeout for "no data received"
-#define TIMEOUT 10 // in Minutes
+#define TIMEOUT 30 // in Minutes
 
 /////////////////////////////////////
 //// Initialise global variables ////
 /////////////////////////////////////
 String serialInputString = ""; // String/Command typed in serial console to Bunny
-unsigned long last_data = 0;   // Millis-Timestamp of last time data was received
+unsigned long last_data1 = 0;  // Millis-Timestamp of last time data was received (for row 1)
+unsigned long last_data2 = 0;  // Millis-Timestamp of last time data was received (for row 2)
 byte act_col = 0;              // Actual column in loop-cycle
 uint8_t act_digit1;            // Value of actual first 7-segment-digit in loop-cycle
 uint8_t act_digit2;            // Value of actual second 7-segment-digit in loop-cycle
@@ -105,19 +106,8 @@ void loop(){
   // Timeout //
   /////////////
   // If data is not updated since 10 minutes, clear values to display the error
-  if((last_data+(TIMEOUT*60000)) < millis()){
-    for(uint8_t i=1; i<6; i++){
-      value1[i] = 0;
-      value2[i] = 0;
-    }
-    value1[0] = 1;
-    value2[0] = 1;
-    for(uint8_t i=0; i<3; i++){
-      rgb1[i] = 0;
-      rgb2[i] = 0;
-    }
-    changeRGB();
-  }
+  if((last_data1+(TIMEOUT*60000)) < millis()) clearRow(value1,rgb1);
+  if((last_data2+(TIMEOUT*60000)) < millis()) clearRow(value2,rgb2);
 
   ///////////////////////////////////////
   // Show values on 7-segment displays //
@@ -197,14 +187,20 @@ void serialEvent(){
         serialInputString.replace(",",".");   // Allow , and . as decimal point
         
         // Parse input and store to display values
-        float val1 = serialInputString.substring(0,serialInputString.indexOf(";")).toFloat();
-        parseInput(&val1,value1,rgb1);
-        float val2 = serialInputString.substring(serialInputString.indexOf(";")+1).toFloat();
-        parseInput(&val2,value2,rgb2);
-        
-        // Update last update timestamp
-        last_data = millis();
-        
+        if(serialInputString.substring(0,serialInputString.indexOf(":")).toInt() == 1){
+          float val1 = serialInputString.substring(serialInputString.indexOf(":")+1).toFloat();
+          parseInput(&val1,value1,rgb1);
+
+          // Update last update timestamp
+          last_data1 = millis();
+        }else{
+          float val2 = serialInputString.substring(serialInputString.indexOf(":")+1).toFloat();
+          parseInput(&val2,value2,rgb2);
+          
+          // Update last update timestamp
+          last_data2 = millis();
+        }
+
         // Reset command-variable
         serialInputString = "";
       }else{
@@ -239,6 +235,17 @@ void parseInput(float *input, uint8_t *value, uint8_t *rgb){
   rgb[2] =                map(constrain(*input,-10,10),-10,10,255,0); // Blue
   
   // Show new RGB-Values with LEDs
+  changeRGB();
+}
+
+///////////////
+// clear Row //
+///////////////
+// Clears the given row with display and RGB-LEDs
+void clearRow(uint8_t *value, uint8_t *rgb){
+  for(uint8_t i=1; i<6; i++) value[i] = 0;
+  value[0] = 1;
+  for(uint8_t i=0; i<3; i++) rgb[i] = 0;
   changeRGB();
 }
 
