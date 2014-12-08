@@ -14,3 +14,20 @@ and
   2:-3,5\n
 
 (decimal point can be . or ,)
+
+
+FHEM Quick n Dirty (for S300)
+--
+# Show Temperature on RGB-Board
+define Outdoor_Temp_Board notify Indoor:T:.* {\
+  open(FILE,">/dev/ttyUSB0");;\
+  print FILE "1:";; print FILE %EVTPART1;; print FILE "\n";;\
+  close(FILE);;\
+}
+
+# Show Temperature on RGB-Board
+define Outdoor_Temp_Board notify Outdoor:T:.* {\
+  open(FILE,">/dev/ttyUSB0");;\
+  print FILE "2:";; print FILE %EVTPART1;; print FILE "\n";;\
+  close(FILE);;\
+}
